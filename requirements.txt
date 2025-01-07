@@ -1,3 +1,5 @@
 lumibot==3.8.24
 alpaca-trade-api==3.2.0
 timedelta==2020.12.3
+transformers==4.47.1
+torch==2.5.1
