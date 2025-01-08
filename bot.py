@@ -6,11 +6,14 @@ from datetime import datetime
 from alpaca_trade_api import REST
 from timedelta import Timedelta
 from sentiment import predict_sentiment
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 
-API_KEY = "PKOJ3Y5QN1Q36MP8YX6H"
-API_SECRET = "5EoK9EyURnP3DplRV8GFQGqhSJ0QcQ85DhcsKW7T"
-BASE_URL = "https://paper-api.alpaca.markets/v2"
+API_KEY = os.getenv('API_KEY')
+API_SECRET = os.getenv('API_SECRET')
+BASE_URL = os.getenv('BASE_URL')
 
 ALPACA_CREDS = {
     'API_KEY': API_KEY,
@@ -81,7 +84,7 @@ strategy = SentimentTrader(name='sentiment_strat', broker=broker, parameters={'s
 
 strategy.backtest(
     YahooDataBacktesting,
-    datetime(2024, 12, 15),
-    datetime(2024, 12, 31),
+    datetime(2020, 1, 1),
+    datetime(2025, 1, 1),
     parameters={'symbol': 'SPY', 'cash_at_risk': 0.5}
 )
