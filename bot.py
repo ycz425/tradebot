@@ -5,6 +5,7 @@ from lumibot.traders import Trader
 from datetime import datetime
 from alpaca_trade_api import REST
 from timedelta import Timedelta
+from sentiment import predict_sentiment
 
 
 API_KEY = "PKOJ3Y5QN1Q36MP8YX6H"
@@ -18,7 +19,7 @@ ALPACA_CREDS = {
 }
 
 
-class Trader(Strategy):
+class SentimentTrader(Strategy):
     def initialize(self, symbol: str = 'SPY', cash_at_risk: float = 0.5):
         self.symbol = symbol
         self.sleeptime = '24H'
@@ -32,36 +33,51 @@ class Trader(Strategy):
         quantity = round(cash * self.cash_at_risk / last_price)
         return cash, last_price, quantity
 
-    def get_news(self):
+    def get_sentiment(self):
         news_list = self.api.get_news(
             symbol=self.symbol,
             start=(self.get_datetime() - Timedelta(days=3)).strftime('%Y-%m-%d'),
             end=self.get_datetime().strftime('%Y-%m-%d')
         )
-        return [news.headline for news in news_list]
+        headlines = [news.headline for news in news_list]
+        return predict_sentiment(headlines)
+        
 
     def on_trading_iteration(self):
-        if self.get_position(self.symbol) is None:
-            self.last_trade = None
-
-        
         cash, last_price, quantity = self.position_sizing()
-        if cash > last_price and self.last_trade is None:
-            print(self.get_news())
-            order = self.create_order(
-                self.symbol,
-                quantity,
-                'buy',
-                type='bracket',
-                take_profit_price = last_price * 1.20,
-                stop_loss_price = last_price * 0.95
-            )
-            self.submit_order(order)
-            self.last_trade = 'buy'
+        probability, sentiment = self.get_sentiment()
+
+        if cash > last_price:
+            if sentiment == 'positive' and probability > 0.999: 
+                if self.last_trade == 'sell':
+                    self.sell_all()
+                order = self.create_order(
+                    self.symbol,
+                    quantity,
+                    'buy',
+                    type='bracket',
+                    take_profit_price = last_price * 1.20,
+                    stop_loss_price = last_price * 0.95
+                )
+                self.submit_order(order)
+                self.last_trade = 'buy'
+            elif sentiment == 'negative' and probability > 0.999: 
+                if self.last_trade == 'buy':
+                    self.sell_all()
+                order = self.create_order(
+                    self.symbol,
+                    quantity,
+                    'sell',
+                    type='bracket',
+                    take_profit_price = last_price * 0.8,
+                    stop_loss_price = last_price * 1.05
+                )
+                self.submit_order(order)
+                self.last_trade = 'sell'
 
 
 broker = Alpaca(ALPACA_CREDS)
-strategy = Trader(name='strat', broker=broker, parameters={'symbol': 'SPY', 'cash_at_risk': 0.5})
+strategy = SentimentTrader(name='sentiment_strat', broker=broker, parameters={'symbol': 'SPY', 'cash_at_risk': 0.5})
 
 strategy.backtest(
     YahooDataBacktesting,
