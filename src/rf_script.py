@@ -31,10 +31,11 @@ def get_features_and_targets(file_path: str) -> None:
     features['sma_diff'] = features['price'].rolling(window=20).mean() - features['price'].rolling(window=50).mean()
 
     features['volatility_realized_5d'] = features['price'].rolling(window=5).std()
-    y = (features['price'].shift(-20) - features['price']) / features['price']
-
-    features.drop(columns=['sent_neg', 'price', 'gain', 'loss', 'rs'], inplace=True)
+    features['price_change_20d'] = (features['price'].shift(-20) - features['price']) / features['price']
+    
     features.dropna(inplace=True)
+    y = features['price_change_20d']
+    features.drop(columns=['sent_neg', 'price', 'gain', 'loss', 'rs', 'price_change_20d'], inplace=True)
 
     return features, y
 
