@@ -48,7 +48,7 @@ def grid_search(X_train , y_train) -> tuple[RandomForestRegressor, dict, float]:
         'max_depth': [None, 10, 20, 30, 50],
         'min_samples_split': [2, 5, 10, 20],
         'min_samples_leaf': [1, 2, 5, 10],
-        'max_features': [None, 'auto', 'sqrt', 'log2'],
+        'max_features': [None, 'sqrt', 'log2'],
         'bootstrap': [True, False]
     }
 
@@ -74,12 +74,12 @@ def save_model(model, name: str, cv_score: float, train_data: str,):
 
 def create_best_model(name: str, train_data: str, save=True) -> RandomForestRegressor:
     X_train, y_train = get_features_and_targets('data/msft-2020-2025.json')
-    # model, _, best_score = grid_search(X_train, y_train)
+    model, _, best_score = grid_search(X_train, y_train)
 
-    # if save:
-    #     save_model(model, name, best_score, train_data)
+    if save:
+        save_model(model, name, best_score, train_data)
 
-    # return model
+    return model
     
 
 if __name__ == '__main__':
