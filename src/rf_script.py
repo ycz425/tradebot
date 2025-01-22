@@ -3,10 +3,11 @@ from sklearn.model_selection import GridSearchCV
 import os
 import joblib
 import pandas as pd
+import numpy as np
 import json
 
 
-def get_features_and_targets(file_path: str) -> None:
+def get_features_and_targets(file_path: str) -> tuple[pd.DataFrame, pd.Series]:
     """
     Data file should a json file and satisfy the following:
     - contains the keys: 'sent_pos', 'sent_neg', 'price', 'news_vol'
@@ -22,9 +23,9 @@ def get_features_and_targets(file_path: str) -> None:
     features['price_return'] = features['price'].diff()
 
     features['gain'] = features['price_return'].apply(lambda x: x if x > 0 else 0)
-    features['loss'] = features['price_return'].apply(lambda x: x if x < 0 else 0)
+    features['loss'] = features['price_return'].apply(lambda x: abs(x) if x < 0 else 0)
     features['rs'] = features['gain'].rolling(window=14).mean() / features['loss'].rolling(window=14).mean()
-    features['rsi_14'] = 100 - 100 / (1 + features['rs'])
+    features['rsi_14'] = features['rs'].apply(lambda x: 100 - 100 / (1 + x) if np.isfinite(x) else 100)
 
     features['price_sma20_diff'] = features['price'] - features['price'].rolling(window=20).mean()
     features['price_sma50_diff'] = features['price'] - features['price'].rolling(window=50).mean()
@@ -73,12 +74,12 @@ def save_model(model, name: str, cv_score: float, train_data: str,):
 
 def create_best_model(name: str, train_data: str, save=True) -> RandomForestRegressor:
     X_train, y_train = get_features_and_targets('data/msft-2020-2025.json')
-    model, _, best_score = grid_search(X_train, y_train)
+    # model, _, best_score = grid_search(X_train, y_train)
 
-    if save:
-        save_model(model, name, best_score, train_data)
+    # if save:
+    #     save_model(model, name, best_score, train_data)
 
-    return model
+    # return model
     
 
 if __name__ == '__main__':

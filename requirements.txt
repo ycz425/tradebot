@@ -4,3 +4,4 @@ timedelta==2020.12.3
 transformers==4.47.1
 torch==2.5.1
 scikit-learn==1.6.1
+numpy==2.2.1
