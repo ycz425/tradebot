@@ -27,6 +27,7 @@ class SentimentTrader(Strategy):
         self.asset = symbol
         self.sleeptime = '24H'
         self.api = REST(base_url=BASE_URL, key_id=API_KEY, secret_key=API_SECRET)
+        self.recent_sentiments = ['neutral', 'neutral']
 
 
     def position_sizing(self):
@@ -46,9 +47,12 @@ class SentimentTrader(Strategy):
 
     def on_trading_iteration(self):
         probability, sentiment = self.get_sentiment()
+        self.recent_sentiments.append(sentiment)
+        self.recent_sentiments.pop(0)
+        print(f'\n{self.get_datetime().strftime('%Y-%m-%d')}: {sentiment}')
         current_price = self.get_last_price(self.asset)
 
-        if sentiment == 'positive' and probability > 0.7:
+        if all(sentiment == 'positive' for sentiment in self.recent_sentiments):
             if self.get_position(self.asset) is None:
                 quantity = self.position_sizing()
                 order = self.create_order(
@@ -61,12 +65,12 @@ class SentimentTrader(Strategy):
                     quantity,
                     'sell',
                     type='trailing_stop',
-                    trail_percent=0.02
+                    
                 )  
                 self.submit_order(order)
                 self.submit_order(stop_order)
                 self.max_price = current_price
-        elif sentiment == 'negative' and probability > 0.7:
+        elif all(sentiment == 'negative' for sentiment in self.recent_sentiments):
             if self.get_position(self.asset):
                 self.cancel_open_orders()
                 self.sell_all()
@@ -78,7 +82,8 @@ strategy = SentimentTrader(name='sentiment_strat', broker=broker, parameters={'s
 
 strategy.backtest(
     YahooDataBacktesting,
-    datetime(2024, 1, 1),
+    datetime(2024, 6, 1),
     datetime(2025, 1, 1),
-    parameters={'symbol': 'AAPL'}
+    parameters={'symbol': 'AAPL'},
+    benchmark_asset='AAPL'
 )
