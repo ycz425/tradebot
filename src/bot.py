@@ -23,7 +23,7 @@ ALPACA_CREDS = {
 
 
 class SentimentTrader(Strategy):
-    def initialize(self, symbol: str = 'AAPL'):
+    def initialize(self, symbol: str = 'SPY'):
         self.asset = symbol
         self.sleeptime = '24H'
         self.api = REST(base_url=BASE_URL, key_id=API_KEY, secret_key=API_SECRET)
@@ -42,12 +42,11 @@ class SentimentTrader(Strategy):
             end=self.get_datetime().strftime('%Y-%m-%d')
         )
         headlines = [news.headline for news in news_list]
-        headlines = [headline for headline in headlines if 'Apple' in headline or 'AAPL' in headline]
         summaries = [news.summary for news in news_list]
-        summaries = [summary for summary in summaries if 'Apple' in summary or 'AAPL' in summary]
         results = headlines + summaries
-        results = [result for result in results if 'Market Clubhouse Morning Memo' not in result]
+        results = [result for result in results if 'Market Clubhouse Morning Memo' not in result and any(keyword in result for keyword in {'Microsoft', 'MSFT', 'Bill', 'Gates', 'Satya', 'Nadella' })]
         print(results)
+
         return predict_sentiment(results)
 
 
@@ -82,12 +81,12 @@ class SentimentTrader(Strategy):
 
 if __name__ == '__main__':
     broker = Alpaca(ALPACA_CREDS)
-    strategy = SentimentTrader(name='sentiment_strat', broker=broker, parameters={'symbol': 'AAPL'})
+    strategy = SentimentTrader(name='sentiment_strat', broker=broker, parameters={'symbol': 'MSFT'})
 
     strategy.backtest(
         YahooDataBacktesting,
-        datetime(2024, 6, 1),
-        datetime(2025, 1, 1),
-        parameters={'symbol': 'AAPL'},
-        benchmark_asset='AAPL'
+        datetime(2020, 1, 1),
+        datetime(2025, 1, 20),
+        parameters={'symbol': 'MSFT'},
+        benchmark_asset='MSFT'
     )
