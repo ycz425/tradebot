@@ -23,16 +23,17 @@ ALPACA_CREDS = {
 
 
 class SentimentTrader(Strategy):
-    def initialize(self, symbol: str = 'SPY'):
+    def initialize(self, symbol: str = 'SPY', risk_per_trade: float = 0.05, trail_percent: float = 0.03):
         self.asset = symbol
         self.sleeptime = '24H'
         self.api = REST(base_url=BASE_URL, key_id=API_KEY, secret_key=API_SECRET)
         self.recent_sentiments = ['neutral', 'neutral', 'neutral', 'neutral', 'neutral']
+        self.risk_per_trade = risk_per_trade
+        self.trail_percent = trail_percent
 
 
     def position_sizing(self):
-        value = self.get_cash() * 0.25
-        return int(value / self.get_last_price(self.asset))
+        return self.get_cash() * self.risk_per_trade / (self.get_last_price(self.asset) * self.trail_percent)
 
 
     def get_sentiment(self):
@@ -69,7 +70,7 @@ class SentimentTrader(Strategy):
                     quantity,
                     'sell',
                     type='trailing_stop',
-                    trail_percent=0.03
+                    trail_percent=self.trail_percent
                 )
                 self.submit_order(order)
                 self.submit_order(stop_order)
