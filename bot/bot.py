@@ -2,9 +2,8 @@ from lumibot.brokers import Alpaca
 from lumibot.backtesting import YahooDataBacktesting
 from lumibot.strategies.strategy import Strategy
 from lumibot.traders import Trader
-from datetime import datetime
+from datetime import datetime, timedelta
 from alpaca_trade_api import REST
-from timedelta import Timedelta
 from sentiment import predict_sentiment
 from dotenv import load_dotenv
 import os
@@ -39,7 +38,7 @@ class SentimentTrader(Strategy):
     def get_sentiment(self):
         news_list = self.api.get_news(
             symbol=self.asset,
-            start=(self.get_datetime() - Timedelta(days=1)).strftime('%Y-%m-%d'),
+            start=(self.get_datetime() - timedelta(days=1)).strftime('%Y-%m-%d'),
             end=self.get_datetime().strftime('%Y-%m-%d')
         )
         headlines = [news.headline for news in news_list]
