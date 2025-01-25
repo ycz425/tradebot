@@ -3,5 +3,6 @@ lumibot==3.8.24
 torch==2.5.1
 stable-baselines3==2.4.1
 yfinance==0.2.51
+matplotlib
 tqdm
 rich
