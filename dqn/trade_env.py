@@ -1,6 +1,5 @@
 import json
 from gymnasium import Env, spaces
-from stable_baselines3 import DQN
 import numpy as np
 import yfinance as yf
 import math
@@ -26,10 +25,10 @@ class TradeEnv(Env):
     ACTION_SPACE_SIZE = 3
     MAX_POSITION = 20 ** 3
 
-    def __init__(self, symbol: str, start: str, end: str, risk_per_trade: float, sentiments_path: str):
+    def __init__(self, symbol: str, start: str, end: str, risk_per_trade: float, sentiments_path: str, eval: bool = False):
         super().__init__()
 
-        self._starting_cash = 1000
+        self._starting_cash = 5000
         self._cash = self._starting_cash
         self._position = 0
 
@@ -97,9 +96,14 @@ class TradeEnv(Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
 
-        self._starting_cash = self.np_random.uniform(1000, 10000)
+        if eval:
+            self._starting_cash = 5000
+            self._position = 0
+        else:
+            self._starting_cash = self.np_random.uniform(1000, 10000)
+            self._position = self.np_random.integers(0, 10)
+
         self._cash = self._starting_cash
-        self.position = self.np_random.integers(0, 10)
         self._step_count = 0
 
         return self._get_obs(), {}
@@ -149,7 +153,7 @@ class TradeEnv(Env):
             reward = -100
 
         if self._step_count == len(self._market_data) - 1:
-            reward = self._starting_cash - (self._cash + self._position * self._get_close_price())
+            reward = (self._cash + self._position * self._get_close_price()) - self._starting_cash
 
         return reward
 
