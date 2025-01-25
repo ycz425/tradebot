@@ -8,22 +8,19 @@ import math
 class TradeEnv(Env):
     """
     Observation Space:
-        * Continuous:
-            - Current cash
-            - Closing stock price of last day
-            - Difference between recent closing price and EMA12
-            - Difference between recent closing price and EMA26
-            - Current MACD historgram
-            - 2 days ago MACD historgram
-            - Average sentiment score
-        * Discrete:
-            - Current position (quantity)
-
+        - Current cash
+        - Current position (quantity)
+        - Closing stock price of last day
+        - Difference between recent closing price and EMA12
+        - Difference between recent closing price and EMA26
+        - Current MACD historgram
+        - 2 days ago MACD historgram
+        - Average sentiment score
+        
     start and end must be in a YYYY-MM-DD format
     """
 
     ACTION_SPACE_SIZE = 3
-    MAX_POSITION = 20 ** 3
 
     def __init__(self, symbol: str, start: str, end: str, risk_per_trade: float, sentiments_path: str, eval: bool = False):
         super().__init__()
@@ -33,14 +30,11 @@ class TradeEnv(Env):
         self._position = 0
 
         self.action_space = spaces.Discrete(TradeEnv.ACTION_SPACE_SIZE)
-        self.observation_space = spaces.Dict({
-            'continuous': spaces.Box(
-                low=np.array([0, 0, -np.inf, -np.inf, -np.inf, -np.inf, -1], dtype=np.float32),
-                high=np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1], dtype=np.float32),
-                shape=(7,)
-            ),
-            'discrete': spaces.Discrete(TradeEnv.MAX_POSITION, start=0)
-        })
+        self.observation_space = spaces.Box(
+            low=np.array([0, 0, 0, -np.inf, -np.inf, -np.inf, -np.inf, -1], dtype=np.float32),
+            high=np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1], dtype=np.float32),
+            shape=(8,)
+        )
 
         self._step_count = 0
         self.symbol = symbol
@@ -154,24 +148,22 @@ class TradeEnv(Env):
             reward = -100
 
         if self._step_count == len(self._market_data) - 1:
-            reward = (self._cash + self._position * self._get_close_price()) - self._starting_cash
+            reward = (self._cash + self._position * self._get_close_price()) - self._starting_portfolio
 
         return reward
 
 
     def _get_obs(self) -> tuple:
-        return {
-            'continuous': np.array([
-                self._cash,
-                self._get_close_price(),
-                self._get_price_ema12_diff(),
-                self._get_price_ema26_diff(),
-                self._get_macd_histogram(),
-                self._get_prev_macd_histogram(),
-                self._get_sentiment_score()
-            ], dtype=np.float32),
-            'discrete': self._position
-        }
+        return np.array([
+            self._cash,
+            self._position,
+            self._get_close_price(),
+            self._get_price_ema12_diff(),
+            self._get_price_ema26_diff(),
+            self._get_macd_histogram(),
+            self._get_prev_macd_histogram(),
+            self._get_sentiment_score()
+        ], dtype=np.float32)
 
 
     def _get_date(self) -> str:
