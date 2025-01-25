@@ -28,8 +28,8 @@ class TradeEnv(Env):
     def __init__(self, symbol: str, start: str, end: str, risk_per_trade: float, sentiments_path: str, eval: bool = False):
         super().__init__()
 
-        self._starting_cash = 5000
-        self._cash = self._starting_cash
+        self._cash = 5000
+        self._starting_portfolio = self._cash
         self._position = 0
 
         self.action_space = spaces.Discrete(TradeEnv.ACTION_SPACE_SIZE)
@@ -45,6 +45,7 @@ class TradeEnv(Env):
         self._step_count = 0
         self.symbol = symbol
         self._risk_per_trade = risk_per_trade
+        self._eval = eval
 
         data = yf.download(self.symbol, start=start, end=end)
         data['EMA12'] = data['Close'].ewm(span=12, adjust=False).mean()
@@ -96,14 +97,14 @@ class TradeEnv(Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
 
-        if eval:
-            self._starting_cash = 5000
+        if self._eval:
+            self._cash = 5000
             self._position = 0
         else:
-            self._starting_cash = self.np_random.uniform(1000, 10000)
+            self._cash = self.np_random.uniform(1000, 10000)
             self._position = self.np_random.integers(0, 10)
 
-        self._cash = self._starting_cash
+        self._starting_portfolio = self._cash + self._position * self._market_data.iloc[0]['Close'].iat[0]
         self._step_count = 0
 
         return self._get_obs(), {}
