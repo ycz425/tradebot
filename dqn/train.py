@@ -61,7 +61,7 @@ if __name__ == '__main__':
     )
 
     train(model, 'tradebot_v1', TIMESTEPS_PER_EPISODE * 2000, eval_env, TIMESTEPS_PER_EPISODE * 4)
-    load_evaluations('dqn/models/tradebot_v0/evaluations.npz')
+    load_evaluations('dqn/models/tradebot_v1/evaluations.npz')
 
     
     
