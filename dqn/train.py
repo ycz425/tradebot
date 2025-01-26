@@ -1,4 +1,5 @@
 from trade_env import TradeEnv
+from gymnasium.wrappers import NormalizeObservation
 from stable_baselines3 import DQN
 import torch
 from stable_baselines3.common.callbacks import EvalCallback
@@ -39,8 +40,8 @@ def load_evaluations(path: str) -> None:
 
 
 if __name__ == '__main__':    
-    build_train_env = lambda: TradeEnv('MSFT', '2019-01-01', '2024-03-01', 0.03, 'dqn/data/MSFT.US_2019-01-01_to_2025-01-20.json')
-    build_eval_env = lambda: TradeEnv('MSFT', '2019-01-01', '2024-03-01', 0.03, 'dqn/data/MSFT.US_2019-01-01_to_2025-01-20.json', eval=True)
+    build_train_env = lambda: NormalizeObservation(TradeEnv('MSFT', '2019-01-01', '2024-03-01', 0.03, 'dqn/data/MSFT.US_2019-01-01_to_2025-01-20.json'))
+    build_eval_env = lambda: NormalizeObservation(TradeEnv('MSFT', '2019-01-01', '2024-03-01', 0.03, 'dqn/data/MSFT.US_2019-01-01_to_2025-01-20.json', eval=True))
 
     train_env = VecMonitor(SubprocVecEnv([build_train_env for _ in range(4)]))
     eval_env = VecMonitor(SubprocVecEnv([build_eval_env for _ in range(4)]))
@@ -50,18 +51,18 @@ if __name__ == '__main__':
         train_env,
         learning_rate=0.0005,
         buffer_size=1000000,
-        exploration_fraction=0.5,
+        exploration_fraction=0.75,
         target_update_interval=1000,
         max_grad_norm=0.5,
         verbose=1,
         policy_kwargs=dict(
-            net_arch=[64, 64, 64],
+            net_arch=[128, 128, 128],
             activation_fn=torch.nn.ReLU
         )
     )
 
-    train(model, 'tradebot_v1', TIMESTEPS_PER_EPISODE * 2000, eval_env, TIMESTEPS_PER_EPISODE * 4)
-    load_evaluations('dqn/models/tradebot_v1/evaluations.npz')
+    train(model, 'tradebot_v2', TIMESTEPS_PER_EPISODE * 5000, eval_env, TIMESTEPS_PER_EPISODE * 4)
+    load_evaluations('dqn/models/tradebot_v2/evaluations.npz')
 
     
     
