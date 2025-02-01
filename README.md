@@ -1,5 +1,5 @@
-# Sentiment-Based Trading Bot
-This project implements a sentiment-based trading bot using the Alpaca API for trading and the FinBERT model for sentiment analysis. The bot trades based on the sentiment of recent news headlines related to a specified stock symbol.
+# DQN Trading Bot
+⚠️ This project is undergoing transition from a sentiment-based trading bot to a DQN-based trading bot. This README has not been updated yet to reflect this change.
 
 ## Table of Contents
 - **[Features](#features)**
